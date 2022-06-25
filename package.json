@@ -1,0 +1,16 @@
+{
+  "name": "swagger-express-next",
+  "version": "1.0.0",
+  "license": "MIT",
+  "main": "index.js",
+  "author": "angro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/angrocode/swagger-express-next.git"
+  },
+  "keywords": ["swagger", "express"],
+  "dependencies": {
+    "express": ">=4.0.0",
+    "swagger-ui-dist": ">=4.0.0"
+  }
+}
