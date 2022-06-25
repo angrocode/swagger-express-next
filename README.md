@@ -2,7 +2,7 @@
 
 #### Мотивация
 Более полное управление параметрами, возможность добавлять плагины в swagger, скрипты с типами и тэгами, произвольное количество модификаций html кода. \
-Всё началось с того что я решил написать [плагин для swagger]() изменяющий поведение [иконок авторизации]((https://github.com/swagger-api/swagger-ui/issues/4402)), 
+Всё началось с того что я решил написать [плагин для swagger](https://github.com/angrocode/swagger-plugin-authorizeIcons) изменяющий поведение [иконок авторизации]((https://github.com/swagger-api/swagger-ui/issues/4402)), 
 но подключить его через модуль swagger-ui-express не удалось, код из [примера](https://github.com/scottie1984/swagger-ui-express#custom-swagger-options) 
 отправляет плагин не в скрипт инициализации, а в схему openapi. Поэтому появилась эта реализация.
 
