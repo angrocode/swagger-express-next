@@ -105,7 +105,6 @@ const express = require('express')
 const app = express()
 const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
-const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
 var swaggerUiOpts = {
   explorer: true,
