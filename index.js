@@ -28,14 +28,14 @@ const baseScript = JSON.parse(`{
 
 function genHtml(defaultHtml, userHtml, params) {
   params = {default: true, ...params}
-  defaultHtml = params?.default ? defaultHtml ?? [] : []
+  if (!params?.default && !Array.isArray(defaultHtml) && !defaultHtml?.length)
+    throw new Error('genHtml: defaultHtml must not be an empty array')
   const {header, body} = userHtml ?? {}
 
-  if (header && params?.default) _merge(header, defaultHtml.findIndex(s => String(s).includes('</head>')))
-  else _merge(header, 0)
+  if (!params?.default) return userHtml
 
-  if (body && params?.default)   _merge(body, defaultHtml.findIndex(s => String(s).includes('</body>')))
-  else defaultHtml.push('', ''); _merge(header, defaultHtml.length)
+  if (header) _merge(header, defaultHtml.findIndex(s => String(s).includes('</head>')))
+  if (body)   _merge(body,   defaultHtml.findIndex(s => String(s).includes('</body>')))
 
   function _merge(u, indx) {
     if (typeof u === 'string' || u instanceof String) {
@@ -56,8 +56,6 @@ function genHtml(defaultHtml, userHtml, params) {
         else if (v.includes('icon')) defaultHtml.forEach((s, i) => s.includes('icon') ? defaultHtml.splice(i, 1, `\t${v}`) : null)
         else defaultHtml.splice(indx + i, null, `\t${v}`)
       })
-    } else {
-      throw new Error(`incorrect html data format`)
     }
   }
 
@@ -67,11 +65,9 @@ function genHtml(defaultHtml, userHtml, params) {
 }
 
 function genScript(defaultObj, userObj, params) {
-  defaultObj = defaultObj ?? {}
-  userObj = userObj ?? {}
   params = {default: true, join: true, ...params}
 
-  let retObj = {}, defK = [], userK = []
+  let retObj = {}, defK, userK
 
   try {
     defK = Object.keys(defaultObj)
@@ -198,43 +194,51 @@ const mimeTypes = {
 }
 
 function swagger(script, html, params) {
+
+  if (Object.keys(script).filter(k => ['script', 'html', 'params'].includes(k)).length > 0)
+    params = script?.params ?? params, html = script?.html ?? html, script = script?.script
+
+  const sf = fs.readdirSync(getAbsoluteFSPath()).filter(f => ![
+    'index.html',
+    'swagger-initializer.js',
+    'package.json',
+    'LICENSE',
+    'NOTICE',
+    'README.md'
+  ].includes(f))
+
+  const lf = ['index.html', 'swagger-initializer.js']
+
   let scrMod
-
   function scriptMod(mod) {
-    if (isObj(mod)) scrMod = mod
+    if (isObj(mod) && params?.queryConfig) scrMod = mod
     else scrMod = {}
-  }
-
-  const routsLoader = {
-    '*': loadSwagger,
-    'null': loadVariable,
-    'swagger-initializer.js': loadVariable,
   }
 
   function _routsVariable(key) {
     switch (key) {
-      case null:
+      case 'index.html':
         return genHtml(baseHtml, html, params?.html)
       case 'swagger-initializer.js':
-        return genScript(baseScript, {...script, ...(params?.queryConfig ? scrMod : {})}, params?.script)
+        return genScript(baseScript, {...script, ...scrMod}, params?.script)
       default: return null
     }
   }
 
-  function router(fileName) {
-    let t, b
-    const type = fileName ? (t = mimeTypes[fileName.match(/[^.]+$/)]) ? t : 'text/plain' : 'text/html'
-    const loader = fileName in routsLoader ? routsLoader[fileName] : routsLoader['*']
-    const buffer = (b = loader(_routsVariable(fileName))) ? b : loader(fileName)
+  function router(url) {
+    let rout, t
+    rout = url.split('?')[0].split('/').filter(Boolean).at(-1)
+    rout = sf.includes(rout) || lf.includes(rout) ? rout : 'index.html'
+    const type = (t = mimeTypes[rout.match(/[^.]+$/)]) ? t : 'text/plain'
+    const buffer = sf.includes(rout) ? loadSwagger(rout) : loadVariable(_routsVariable(rout))
     return {type, buffer: buffer ?? null}
   }
 
-  return (req, res, next) => {
-    let f; const fileName = (f = req.url.match(/^\/(.*?)([/?]|$)/)[1]) != '' ? f : null
+  return (req, res) => {
 
-    if (!fileName) scriptMod(['GET'].includes(req.method) ? req.query ?? {} : req.body ?? {})
+    scriptMod({...req.body, ...req.query})
 
-    const data = router(fileName)
+    const data = router(req.url)
 
     res.setHeader('Surrogate-Control', 'no-store')
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
@@ -247,9 +251,16 @@ function swagger(script, html, params) {
 
 // bind https://github.com/scottie1984/swagger-ui-express/blob/master/index.js
 
+let swgMiddleware
+
 function setup(swaggerDoc, opts, options, customCss, customfavIcon, swaggerUrl, customSiteTitle) {
   const {script, html} = generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swaggerUrl, customSiteTitle)
-  return swagger(script, html)
+  swgMiddleware = swagger(script, html)
+  return swgMiddleware
+}
+
+function serve(req, res, next) {
+  swgMiddleware(req, res)
 }
 
 function serveFiles(swaggerDoc, opts) {
@@ -257,8 +268,7 @@ function serveFiles(swaggerDoc, opts) {
   return swagger(script, html)
 }
 
-function serve(...args) {return (req, res, next) => {next()}}
-function serveWithOptions(...args) {return (req, res, next) => {next()}}
+function serveWithOptions(...args) {return (req, res, next) => next()}
 function generateHTML(...args) {return ''}
 
 function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swaggerUrl, customSiteTitle) {
@@ -296,11 +306,19 @@ function moduleReplace() {
   const om = 'swagger-ui-express'
   const nm = 'swagger-express-next'
 
-  if (!fs.existsSync(join(__dirname, `${om}_original`))) {
-    if (fs.existsSync(join(__dirname, om))) fs.renameSync(join(__dirname, om), join(__dirname, `${om}_original`))
-    fs.mkdirSync(join(__dirname, om))
-    fs.readdirSync(join(__dirname, nm)).forEach(f => {
-      fs.copyFileSync(join(__dirname, nm, f), join(__dirname, om, f))
+  if (fs.existsSync(join(__dirname, '../', om))) {
+    const pj = fs.readFileSync(join(__dirname, '../', om, 'package.json')).toString('utf8')
+    if (JSON.parse(pj).name != nm) {
+      fs.renameSync(join(__dirname, '../', om), join(__dirname, '../', `${om}_original`))
+      fs.mkdirSync(join(__dirname, '../', om))
+      fs.readdirSync(join(__dirname)).forEach(f => {
+        fs.copyFileSync(join(__dirname, f), join(__dirname, '../', om, f))
+      })
+    }
+  } else {
+    fs.mkdirSync(join(__dirname, '../', om))
+    fs.readdirSync(join(__dirname)).forEach(f => {
+      fs.copyFileSync(join(__dirname, f), join(__dirname, '../', om, f))
     })
   }
 }
