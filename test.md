@@ -100,7 +100,27 @@ app.listen(3000)
 ```
 
 ```js
+require('swagger-express-next').moduleReplace()
+const express = require('express')
+const app = express()
+const router = express.Router()
+const swaggerUi = require('swagger-ui-express')
+const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
+var swaggerUiOpts = {
+  explorer: true,
+  swaggerOptions: {
+    plugins: 'authorizeIcons',
+  },
+  swaggerUrl: 'https://petstore.swagger.io/v2/swagger.json',
+  customJs: 'https://cdn.jsdelivr.net/gh/angrocode/swagger-plugin-authorizeIcons/index.js',
+  customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-flattop.css'
+}
+
+app.use('/api', swaggerUi.serve)
+app.get('/api', swaggerUi.setup(null, swaggerUiOpts))
+
+app.listen(3000)
 ```
 
 ```js
