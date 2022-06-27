@@ -44,9 +44,9 @@ const initTypes = Object.freeze({
   modelPropertyMacro: {type: 'function'},
   parameterMacro: {type: 'function'},
   persistAuthorization: {type: 'boolean'},
-  initOAuth: {type: 'object'}, // FIXME: уточнить тип
-  preauthorizeBasic: {type: 'function'}, // FIXME: уточнить тип
-  preauthorizeApiKey: {type: 'function'}, // FIXME: уточнить тип
+  initOAuth: {type: 'object'},
+  preauthorizeBasic: {type: 'function'},
+  preauthorizeApiKey: {type: 'function'},
   '*': {type: 'string'},
 })
 
