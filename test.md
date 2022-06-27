@@ -4,7 +4,6 @@
 require('swagger-express-next').moduleReplace()
 const express = require('express')
 const app = express()
-const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
@@ -17,7 +16,6 @@ app.listen(3000)
 require('swagger-express-next').moduleReplace()
 const express = require('express')
 const app = express()
-const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
@@ -51,7 +49,6 @@ app.listen(3000)
 require('swagger-express-next').moduleReplace()
 const express = require('express')
 const app = express()
-const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
@@ -80,7 +77,6 @@ app.listen(3000)
 require('swagger-express-next').moduleReplace()
 const express = require('express')
 const app = express()
-const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
@@ -104,7 +100,6 @@ app.listen(3000)
 require('swagger-express-next').moduleReplace()
 const express = require('express')
 const app = express()
-const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 
 const swaggerUiOpts = {
