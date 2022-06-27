@@ -1,5 +1,12 @@
 <div align="center"><h2>swagger express next</h2></div>
 
+<div align="right">
+
+[![ver badge](https://badgen.net/npm/v/swagger-express-next)](https://www.npmjs.com/package/swagger-express-next) 
+[![down badge](https://badgen.net/npm/dm/swagger-express-next)](https://www.npmjs.com/package/swagger-express-next)
+
+</div>
+
 #### Мотивация
 Более полное управление параметрами, возможность добавлять плагины в swagger, скрипты с типами и тэгами, произвольное количество модификаций html кода. \
 Всё началось с того что я решил написать [плагин для swagger](https://github.com/angrocode/swagger-plugin-authorizeIcons) изменяющий поведение [иконок авторизации]((https://github.com/swagger-api/swagger-ui/issues/4402)), 
