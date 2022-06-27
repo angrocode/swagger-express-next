@@ -1,4 +1,5 @@
 
+#### test 1
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -11,7 +12,7 @@ app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.listen(3000)
 ```
-
+#### test 2
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -30,7 +31,7 @@ app.get('/api', swaggerUi.setup(
 
 app.listen(3000)
 ```
-
+#### test 3
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -45,7 +46,7 @@ app.use('/birds', router)
 
 app.listen(3000)
 ```
-
+#### test 4
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -74,7 +75,7 @@ app.get('/api', swaggerUi.setup(false, false, options, '.swagger-ui .topbar { ba
 
 app.listen(3000)
 ```
-
+#### test 5
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -83,7 +84,7 @@ const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
-var swaggerUiOpts2 = {
+const swaggerUiOpts2 = {
   explorer: false,
   swaggerOptions: {},
   customCss: '.swagger-ui .topbar { background-color: pink }',
@@ -98,7 +99,7 @@ app.get('/api', swaggerUi.setup(null, swaggerUiOpts2))
 
 app.listen(3000)
 ```
-
+#### test 6
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -106,7 +107,7 @@ const app = express()
 const router = express.Router()
 const swaggerUi = require('swagger-ui-express')
 
-var swaggerUiOpts = {
+const swaggerUiOpts = {
   explorer: true,
   swaggerOptions: {
     plugins: 'authorizeIcons',
@@ -121,7 +122,30 @@ app.get('/api', swaggerUi.setup(null, swaggerUiOpts))
 
 app.listen(3000)
 ```
-
+#### test 7
 ```js
+const swagger = require('swagger-express-next').swagger
+const express = require('express')
+const app = express()
 
+const swgSettings = {
+  html: {
+    header: [
+      '<title>Theme & Plugin</title>',
+      '<link href="https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-flattop.css" rel="stylesheet">',
+    ],
+    body: '<script src="https://cdn.jsdelivr.net/gh/angrocode/swagger-plugin-authorizeIcons/index.js"></script>'
+  },
+  script: {
+    url: 'https://petstore.swagger.io/v2/swagger.json',
+    layout:'StandaloneLayout',
+    plugins: 'authorizeIcons',
+  }
+}
+
+// app.use('/api', swagger(swgSettings.script, swgSettings.html))
+// OR
+// app.use('/api', swagger(swgSettings))
+
+app.listen(3000)
 ```
