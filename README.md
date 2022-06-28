@@ -15,7 +15,7 @@
 [NestJS 8.4.7](https://nestjs.com/) \
 Примеры из тестов [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express/blob/master/test/testapp/app.js)
 
-Стратегия совместимости до конца не определена, нужно больше примеров, [работающие тесты](https://github.com/angrocode/swagger-express-next/blob/main/test.md).
+Стратегия совместимости до конца не определена, нужно больше примеров, [работающие тесты](https://github.com/angrocode/swagger-express-next/blob/main/tests.md).
 
 Для подмены пакета swagger-ui-express используется функция moduleReplace,
 которая переименовывает директорию swagger-ui-express в swagger-ui-express_original
@@ -63,7 +63,7 @@ queryConfig разрешает передачу параметров в запр
 
 #### Примеры
 
-[смотрите тесты](https://github.com/angrocode/swagger-express-next/blob/main/test.md)
+[смотрите тесты](https://github.com/angrocode/swagger-express-next/blob/main/tests.md)
 
 ```js
 const swagger = require('swagger-express-next').swagger
