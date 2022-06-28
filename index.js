@@ -8,6 +8,13 @@ function isObj(d) {
   return (d === Object(d) && Object.prototype.toString.call(d) === '[object Object]')
 }
 
+function objson(d) {
+  let r
+  if (typeof d === 'string' || d instanceof String) try {r = JSON.parse(d)} catch (e) {r = {error: e}}
+  if (isObj(d)) try {r = JSON.stringify(d)} catch (e) {r = {error: e}}
+  return r ?? d
+}
+
 const baseHtml = fs.readFileSync(join(getAbsoluteFSPath(), 'index.html'))
   .toString('utf8')
   .replaceAll('./', '')
@@ -97,7 +104,7 @@ function genScript(defaultObj, userObj, params) {
       case 'boolean':  return d
       case 'function': return d.toString()
       case 'array':    return t.itemsType == 'string' ? `[${d.reduce((a, v) => a + `"${v}",`, '')}]` : `[${d.toString()}]`
-      case 'object':   return ((d) => {let r; try {r = JSON.stringify(d)} catch (e) {r = {error: e}} return r})(d)
+      case 'object':   return objson(d)
     }
   }
 
@@ -119,7 +126,7 @@ function genScript(defaultObj, userObj, params) {
         case 'number':   return parseInt(d, 10)
         case 'boolean':  return !(d == 'false' || d == '0')
         case 'array':    return [d]
-        case 'object':   return ((d) => {let r; try {r = JSON.parse(d)} catch (e) {r = {error: e}} return r})(d)
+        case 'object':   return objson(d)
         default: throw new Error(`${k} must be an ${t.type}`)
       }
 
@@ -193,52 +200,46 @@ const mimeTypes = {
   js: 'application/json',
 }
 
-function swagger(script, html, params) {
+const localFiles = ['index.html', 'swagger-initializer.js']
 
+const swaggerFiles = fs.readdirSync(getAbsoluteFSPath()).filter(f => ![
+  'index.html',
+  'swagger-initializer.js',
+  'package.json',
+  'LICENSE',
+  'NOTICE',
+  'README.md'
+].includes(f))
+
+function swagger(script, html, params) {
   if (Object.keys(script).filter(k => ['script', 'html', 'params'].includes(k)).length > 0)
     params = script?.params ?? params, html = script?.html ?? html, script = script?.script
 
-  const sf = fs.readdirSync(getAbsoluteFSPath()).filter(f => ![
-    'index.html',
-    'swagger-initializer.js',
-    'package.json',
-    'LICENSE',
-    'NOTICE',
-    'README.md'
-  ].includes(f))
+  if (isObj(params?.type)) Object.entries(params.type).forEach(([k, v]) => initTypes[k] = isObj(v) ? v : {type: v})
 
-  const lf = ['index.html', 'swagger-initializer.js']
-
-  let scrMod
-  function scriptMod(mod) {
-    if (isObj(mod) && params?.queryConfig) scrMod = mod
-    else scrMod = {}
-  }
-
+  let queryScript
   function _routsVariable(key) {
     switch (key) {
       case 'index.html':
         return genHtml(baseHtml, html, params?.html)
       case 'swagger-initializer.js':
-        return genScript(baseScript, {...script, ...scrMod}, params?.script)
+        return genScript(baseScript, {...script, ...queryScript}, params?.script)
       default: return null
     }
   }
 
-  function router(url) {
+  function router(url, query) {
     let rout, t
     rout = url.split('?')[0].split('/').filter(Boolean).at(-1)
-    rout = sf.includes(rout) || lf.includes(rout) ? rout : 'index.html'
+    rout = swaggerFiles.includes(rout) || localFiles.includes(rout) ? rout : 'index.html'
+    if (rout == 'index.html' && isObj(query)) queryScript = query
     const type = (t = mimeTypes[rout.match(/[^.]+$/)]) ? t : 'text/plain'
-    const buffer = sf.includes(rout) ? loadSwagger(rout) : loadVariable(_routsVariable(rout))
+    const buffer = swaggerFiles.includes(rout) ? loadSwagger(rout) : loadVariable(_routsVariable(rout))
     return {type, buffer: buffer ?? null}
   }
 
   return (req, res) => {
-
-    scriptMod({...req.body, ...req.query})
-
-    const data = router(req.url)
+    const data = router(req.url, {...req.body, ...req.query})
 
     res.setHeader('Surrogate-Control', 'no-store')
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
@@ -276,7 +277,8 @@ function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swa
   const header = []
   const body   = []
 
-  options            = opts?.swaggerOptions ?? options
+  const swgOptions   = isObj(opts?.swaggerOptions) ? opts.swaggerOptions : {}
+  options            = isObj(options) ? options : {}
   customCss          = opts?.customCss ?? customCss
   const customJs     = opts?.customJs
   const customJsStr  = opts?.customJsStr
@@ -290,7 +292,7 @@ function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swa
   if (swaggerUrl)      script['url']    = swaggerUrl
   if (swaggerUrls)     script['urls']   = swaggerUrls
   if (isExplorer)      script['layout'] = 'StandaloneLayout'
-  if (swaggerDoc)      script['spec']   = isObj(swaggerDoc) ? ((d) => {let r; try {r = JSON.stringify(d)} catch (e) {r = {error: e}} return r})(swaggerDoc) : swaggerDoc
+  if (swaggerDoc)      script['spec']   = isObj(swaggerDoc) ? objson(swaggerDoc) : swaggerDoc
 
   if (customCss)       header.push(`<style>${customCss}</style>`)
   if (customfavIcon)   header.push(`<link rel="icon" href="${customfavIcon}" />`)
@@ -299,7 +301,7 @@ function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swa
   if (customJs)        body.push  (`<script src="${customJs}"></script>`)
   if (customJsStr)     body.push  (`<script>${customJsStr}</script>`)
 
-  return {script: {...script, ...(isObj(options) ? options : {})}, html: {header, body}}
+  return {script: {...script, ...swgOptions, ...options}, html: {header, body}}
 }
 
 function moduleReplace() {
