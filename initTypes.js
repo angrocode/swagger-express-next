@@ -1,4 +1,4 @@
-const initTypes = Object.freeze({
+const initTypes = {
   configUrl: {type: 'string'},
   dom_id: {type: 'string'},
   domNode: {type: 'string'},
@@ -48,6 +48,6 @@ const initTypes = Object.freeze({
   preauthorizeBasic: {type: 'function'},
   preauthorizeApiKey: {type: 'function'},
   '*': {type: 'string'},
-})
+}
 
 module.exports = initTypes
