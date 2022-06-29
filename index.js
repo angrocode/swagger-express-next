@@ -17,7 +17,6 @@ function objson(d) {
 
 const baseHtml = fs.readFileSync(join(getAbsoluteFSPath(), 'index.html'))
   .toString('utf8')
-  .replaceAll('./', '')
   .split('\n')
 
 const baseScript = JSON.parse(`{
@@ -34,37 +33,50 @@ const baseScript = JSON.parse(`{
 }`)
 
 function genHtml(defaultHtml, userHtml, params) {
-  params = {default: true, ...params}
+  params = {default: true, uri: '', ...params}
   if (!params?.default && !Array.isArray(defaultHtml) && !defaultHtml?.length)
     throw new Error('genHtml: defaultHtml must not be an empty array')
-  const {header, body} = userHtml ?? {}
+  let {header, body} = userHtml ?? {}
 
   if (!params?.default) return userHtml
 
-  if (header) _merge(header, defaultHtml.findIndex(s => String(s).includes('</head>')))
-  if (body)   _merge(body,   defaultHtml.findIndex(s => String(s).includes('</body>')))
+  if (header) {
+    if (typeof header === 'string' || header instanceof String) header = [header]
+    else if (Array.isArray(header)) null
+    else if (isObj(header)) header = Object.values(header)
+    else throw new Error('The header can be a string, an array, an object')
 
-  function _merge(u, indx) {
-    if (typeof u === 'string' || u instanceof String) {
-      if (u.includes('<title>')) defaultHtml[defaultHtml.findIndex(s => String(s).includes('<title>'))] = `\t${u}`
-      else if (u.includes('icon')) defaultHtml.forEach((s, i) => s.includes('icon') ? defaultHtml.splice(i, 1, `\t${u}`) : null)
-      else defaultHtml.splice(indx, null, `\t${u}`)
-
-    } else if (Array.isArray(u)) {
-      u.forEach((v, i) => {
-        if (v.includes('<title>')) defaultHtml[defaultHtml.findIndex(s => String(s).includes('<title>'))] = `\t${v}`
-        else if (v.includes('icon')) defaultHtml.forEach((s, i) => s.includes('icon') ? defaultHtml.splice(i, 1, `\t${v}`) : null)
-        else defaultHtml.splice(indx + i, null, `\t${v}`)
-      })
-
-    } else if (isObj(u)) {
-      Object.values(u).forEach((v, i) => {
-        if (v.includes('<title>')) defaultHtml[defaultHtml.findIndex(s => String(s).includes('<title>'))] = `\t${v}`
-        else if (v.includes('icon')) defaultHtml.forEach((s, i) => s.includes('icon') ? defaultHtml.splice(i, 1, `\t${v}`) : null)
-        else defaultHtml.splice(indx + i, null, `\t${v}`)
-      })
+    let indx
+    if ((indx = header.findIndex(v => v.includes('<title>'))) + 1) {
+      defaultHtml[defaultHtml.findIndex(v => v.includes('<title>'))] = `\t${header.splice(indx, 1)[0]}`
     }
+
+    if (header.some(v => v.includes('icon'))) {
+      defaultHtml = defaultHtml.filter(v => !v.includes('icon'))
+    }
+
+    indx = defaultHtml.findIndex(v => v.includes('</head>'))
+    header.forEach(v => {
+      defaultHtml.splice(indx++, null, `\t${v}`)
+    })
   }
+
+  if (body) {
+    if (typeof body === 'string' || body instanceof String) body = [body]
+    else if (Array.isArray(body)) null
+    else if (isObj(body)) body = Object.values(body)
+    else throw new Error('The body can be a string, an array, an object')
+
+    let indx
+    indx = defaultHtml.findIndex(v => v.includes('</body>'))
+    body.forEach(v => defaultHtml.splice(indx++, null, `\t${v}`))
+  }
+
+  defaultHtml = defaultHtml.map(v => {
+    v = v.replace(/href=["./]+(?!http)/, `href="${params.uri}`).replace(/href=['./]+(?!http)/, `href='${params.uri}`)
+    v = v.replace(/src=["./]+(?!http)/, `src="${params.uri}`).replace(/src=['./]+(?!http)/, `src='${params.uri}`)
+    return v
+  })
 
   return defaultHtml.reduce((a, v) => {
     return a + `${v} \n`
@@ -217,29 +229,30 @@ function swagger(script, html, params) {
 
   if (isObj(params?.type)) Object.entries(params.type).forEach(([k, v]) => initTypes[k] = isObj(v) ? v : {type: v})
 
-  let queryScript
+  let queryMod, uri
   function _routsVariable(key) {
     switch (key) {
       case 'index.html':
-        return genHtml(baseHtml, html, params?.html)
+        return genHtml(baseHtml, html, {uri, ...params?.html})
       case 'swagger-initializer.js':
-        return genScript(baseScript, {...script, ...queryScript}, params?.script)
+        return genScript(baseScript, {...script, ...queryMod}, params?.script)
       default: return null
     }
   }
 
   function router(url, query) {
-    let rout, t
-    rout = url.split('?')[0].split('/').filter(Boolean).at(-1)
-    rout = swaggerFiles.includes(rout) || localFiles.includes(rout) ? rout : 'index.html'
-    if (rout == 'index.html' && isObj(query)) queryScript = query
+    let r, t
+    const rout = (r = url.split('?')[0].split('/').at(-1)) == '' ? 'index.html' : r
+    if (!swaggerFiles.includes(rout) && !localFiles.includes(rout)) return {type: 'text/plain', buffer: null}
+    if (rout == 'index.html' && isObj(query)) queryMod = query, uri = url
     const type = (t = mimeTypes[rout.match(/[^.]+$/)]) ? t : 'text/plain'
     const buffer = swaggerFiles.includes(rout) ? loadSwagger(rout) : loadVariable(_routsVariable(rout))
     return {type, buffer: buffer ?? null}
   }
 
   return (req, res) => {
-    const data = router(req.url, {...req.body, ...req.query})
+
+    const data = router(`${req.protocol}://${req.get('host')}${req.baseUrl}${req.url}`, {...req.body, ...req.query})
 
     res.setHeader('Surrogate-Control', 'no-store')
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
@@ -294,10 +307,10 @@ function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swa
   if (isExplorer)      script['layout'] = 'StandaloneLayout'
   if (swaggerDoc)      script['spec']   = isObj(swaggerDoc) ? objson(swaggerDoc) : swaggerDoc
 
-  if (customCss)       header.push(`<style>${customCss}</style>`)
   if (customfavIcon)   header.push(`<link rel="icon" href="${customfavIcon}" />`)
   if (customSiteTitle) header.push(`<title>${customSiteTitle}</title>`)
   if (customCssUrl)    header.push(`<link href="${customCssUrl}" rel="stylesheet">`)
+  if (customCss)       header.push(`<style>${customCss}</style>`)
   if (customJs)        body.push  (`<script src="${customJs}"></script>`)
   if (customJsStr)     body.push  (`<script>${customJsStr}</script>`)
 
