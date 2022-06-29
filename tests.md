@@ -180,7 +180,7 @@ app.use('/api', swagger(swgSettings))
 app.listen(3000)
 ```
 
-test 9 Old & New Options [MVP]
+test 9 Old & New Options (internal test)
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
