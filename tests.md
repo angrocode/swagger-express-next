@@ -144,3 +144,39 @@ const swgSettings = {
 
 app.listen(3000)
 ```
+
+test 8
+```js
+const swagger = require('swagger-express-next').swagger
+const express = require('express')
+const app = express()
+
+const swgSettings = {
+  html: `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Title</title>
+    </head>
+    <body>
+        <div id="load">Loading...</div>
+        
+        <script>
+          window.onload = function() {
+            document.getElementById('load').innerHTML = new Date()
+          }
+        </script>
+    </body>
+    </html>
+  `,
+  params: {
+    html:   {default: false},
+  }
+}
+
+app.use('/api', swagger(swgSettings))
+
+app.listen(3000)
+```
+
