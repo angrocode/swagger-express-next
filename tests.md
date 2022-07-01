@@ -145,7 +145,7 @@ const swgSettings = {
 app.listen(3000)
 ```
 
-test 8
+#### test 8
 ```js
 const swagger = require('swagger-express-next').swagger
 const express = require('express')
@@ -180,7 +180,47 @@ app.use('/api', swagger(swgSettings))
 app.listen(3000)
 ```
 
-test 9 Old & New Options (internal test)
+#### test 9
+```js
+const swagger = require('swagger-express-next').swagger
+const express = require('express')
+const app = express()
+
+const swgSettings = {
+  html: {
+    header: '<title>Swagger Snippets</title>',
+  },
+  script: {
+    layout:'StandaloneLayout',
+    url: 'https://petstore.swagger.io/v2/swagger.json',
+    requestSnippetsEnabled: true,
+    requestSnippets: {
+      generators: {
+        curl_bash: {
+          title: "cURL (bash)",
+          syntax: "bash"
+        },
+        curl_powershell: {
+          title: "cURL (PowerShell)",
+          syntax: "powershell"
+        },
+        curl_cmd: {
+          title: "cURL (CMD)",
+          syntax: "bash"
+        },
+      },
+      defaultExpanded: true,
+      languages: ['curl_bash', 'curl_powershell', 'curl_cmd'],
+    }
+  },
+}
+
+app.use('/api', swagger(swgSettings))
+
+app.listen(3000)
+```
+
+#### test 99 Old & New Options (internal test)
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
