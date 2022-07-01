@@ -10,8 +10,8 @@ function isObj(d) {
 
 function objson(d) {
   let r
-  if (typeof d === 'string' || d instanceof String) try {r = JSON.parse(d)} catch (e) {r = {error: e}}
-  if (isObj(d)) try {r = JSON.stringify(d)} catch (e) {r = {error: e}}
+  if (typeof d === 'string' || d instanceof String) try {r = JSON.parse(d)} catch (e) {r = {objson_error: e}}
+  if (isObj(d)) try {r = JSON.stringify(d)} catch (e) {r = {objson_error: e}}
   return r ?? d
 }
 
@@ -34,11 +34,10 @@ const baseScript = JSON.parse(`{
 
 function genHtml(defaultHtml, userHtml, params) {
   params = {default: true, uri: '', ...params}
+  if (!params?.default) return userHtml
   if (!params?.default && !Array.isArray(defaultHtml) && !defaultHtml?.length)
     throw new Error('genHtml: defaultHtml must not be an empty array')
-  let {header, body} = userHtml ?? {}
-
-  if (!params?.default) return userHtml
+  let html = defaultHtml.map(v => v), {header, body} = userHtml ?? {}
 
   if (header) {
     if (typeof header === 'string' || header instanceof String) header = [header]
@@ -48,16 +47,16 @@ function genHtml(defaultHtml, userHtml, params) {
 
     let indx
     if ((indx = header.findIndex(v => v.includes('<title>'))) + 1) {
-      defaultHtml[defaultHtml.findIndex(v => v.includes('<title>'))] = `\t${header.splice(indx, 1)[0]}`
+      html[html.findIndex(v => v.includes('<title>'))] = `\t${header.splice(indx, 1)[0]}`
     }
 
     if (header.some(v => v.includes('icon'))) {
-      defaultHtml = defaultHtml.filter(v => !v.includes('icon'))
+      html = html.filter(v => !v.includes('icon'))
     }
 
-    indx = defaultHtml.findIndex(v => v.includes('</head>'))
+    indx = html.findIndex(v => v.includes('</head>'))
     header.forEach(v => {
-      defaultHtml.splice(indx++, null, `\t${v}`)
+      html.splice(indx++, null, `\t${v}`)
     })
   }
 
@@ -68,17 +67,17 @@ function genHtml(defaultHtml, userHtml, params) {
     else throw new Error('The body can be a string, an array, an object')
 
     let indx
-    indx = defaultHtml.findIndex(v => v.includes('</body>'))
-    body.forEach(v => defaultHtml.splice(indx++, null, `\t${v}`))
+    indx = html.findIndex(v => v.includes('</body>'))
+    body.forEach(v => html.splice(indx++, null, `\t${v}`))
   }
 
-  defaultHtml = defaultHtml.map(v => {
+  html = html.map(v => {
     v = v.replace(/href=["./]+(?!http)/, `href="${params.uri}`).replace(/href=['./]+(?!http)/, `href='${params.uri}`)
     v = v.replace(/src=["./]+(?!http)/, `src="${params.uri}`).replace(/src=['./]+(?!http)/, `src='${params.uri}`)
     return v
   })
 
-  return defaultHtml.reduce((a, v) => {
+  return html.reduce((a, v) => {
     return a + `${v} \n`
   }, '')
 }
@@ -103,20 +102,33 @@ function genScript(defaultObj, userObj, params) {
   const keys = [...new Set([...defK, ...userK])]
 
   keys.forEach(k => {
-    const t = initTypes[k] ?? initTypes['*']
-    if (params.default && k in defaultObj && k in userObj) retObj[k] = _print(t, _merge(t, _normalize(t, k, defaultObj[k]), _normalize(t, k, userObj[k])))
-    else if (params.default && k in defaultObj) retObj[k] = _print(t, _normalize(t, k, defaultObj[k]))
-    else if (k in userObj) retObj[k] = _print(t, _normalize(t, k, userObj[k]))
+    if (!k in initTypes) throw new Error('It is not possible to determine the field type')
+    const t = initTypes[k]
+    if (params.default && k in defaultObj && k in userObj) retObj[k] = _print(k, t, _merge(t, _normalize(k, t, defaultObj[k]), _normalize(k, t, userObj[k])))
+    else if (params.default && k in defaultObj) retObj[k] = _print(k, t, _normalize(k, t, defaultObj[k]))
+    else if (k in userObj) retObj[k] = _print(k, t, _normalize(k, t, userObj[k]))
   })
 
-  function _print(t, d) {
+  function _printObj(k, t, d) {
+    const r = Object.entries(d).reduce((a, [k, v]) => {
+      return a + `\t\t\t"${k}": ${_print(k, t.itemsType[k], _normalize(k, t.itemsType[k], v))}, \n`
+    }, '')
+    return `{\n${r}\t\t}`
+  }
+
+  function _printArr(t, d) {
+    return t.itemsType == 'string' ? `[${d.reduce((a, v) => a + `"${v}",`, '')}]` : `[${d.toString()}]`
+  }
+
+  function _print(k, t, d) {
     switch (t.type) {
       case 'string':   return `"${d}"`
       case 'number':   return d
       case 'boolean':  return d
       case 'function': return d.toString()
-      case 'array':    return t.itemsType == 'string' ? `[${d.reduce((a, v) => a + `"${v}",`, '')}]` : `[${d.toString()}]`
-      case 'object':   return objson(d)
+      case 'array':    return _printArr(t, d)
+      case 'object':   return _printObj(k, t, d)
+      case 'json':     return d
     }
   }
 
@@ -128,10 +140,11 @@ function genScript(defaultObj, userObj, params) {
       case 'function': return u
       case 'array':    return params.join ? [...new Set([...d, ...u])] : u
       case 'object':   return params.join ? {...d, ...u} : u
+      case 'json':     return params.join ? objson({...objson(d), ...objson(u)}) : u
     }
   }
 
-  function _normalize(t, k, d) {
+  function _normalize(k, t, d) {
     if (typeof d == 'string' || d instanceof String) {
       switch (t.type) {
         case 'string':   return d
@@ -139,6 +152,19 @@ function genScript(defaultObj, userObj, params) {
         case 'boolean':  return !(d == 'false' || d == '0')
         case 'array':    return [d]
         case 'object':   return objson(d)
+        case 'json':     return d
+        default: throw new Error(`${k} must be an ${t.type}`)
+      }
+
+    } else if (d === null || d === undefined) {
+      console.error(`! ${k} must be an ${t.type}, now ${d} !`)
+      switch (t.type) {
+        case 'string':   return ''
+        case 'number':   return 0
+        case 'boolean':  return false
+        case 'array':    return []
+        case 'object':   return {}
+        case 'json':     return '{}'
         default: throw new Error(`${k} must be an ${t.type}`)
       }
 
@@ -169,7 +195,8 @@ function genScript(defaultObj, userObj, params) {
       switch (t.type) {
         case 'array':    return [d]
         case 'object':   return d
-        default: throw new Error(`${k} must be an ${t.type}`)
+        case 'json':     return objson(d)
+        default: throw new Error(`${k} must be!! an ${t.type}`)
       }
 
     } else if (typeof d == 'function') {
@@ -244,7 +271,7 @@ function swagger(script, html, params) {
     let r, t
     const rout = (r = url.split('?')[0].split('/').at(-1)) == '' ? 'index.html' : r
     if (!swaggerFiles.includes(rout) && !localFiles.includes(rout)) return {type: 'text/plain', buffer: null}
-    if (rout == 'index.html' && isObj(query)) queryMod = query, uri = url
+    if (rout == 'index.html') queryMod = query, uri = url
     const type = (t = mimeTypes[rout.match(/[^.]+$/)]) ? t : 'text/plain'
     const buffer = swaggerFiles.includes(rout) ? loadSwagger(rout) : loadVariable(_routsVariable(rout))
     return {type, buffer: buffer ?? null}
