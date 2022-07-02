@@ -44,7 +44,38 @@ app.use('/birds', router)
 
 app.listen(3000)
 ```
+
 #### test 4
+```js
+const swagger = require('swagger-express-next').swagger
+const express = require('express')
+const app = express()
+
+const swgSettings = {
+  html: {
+    header: '<title>Swagger OAuth Origin</title>',
+  },
+  script: {
+    layout:'StandaloneLayout',
+    url: 'https://petstore.swagger.io/v2/swagger.json',
+    oauth2RedirectUrl: 'https://c783-178-70-90-138.ngrok.io/api/oauth2-redirect.html',
+    initOAuth: {
+      clientId: 'test',
+      clientSecret: 'abc123',
+      realm: 'realm1',
+      appName: 'swagger-express-next',
+      scopeSeparator: ',',
+      scopes: 'read:pets, write:pets',
+    },
+  },
+}
+
+app.use('/api', swagger(swgSettings))
+
+app.listen(3000)
+```
+
+#### test 5
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -72,7 +103,7 @@ app.get('/api', swaggerUi.setup(false, false, options, '.swagger-ui .topbar { ba
 
 app.listen(3000)
 ```
-#### test 5
+#### test 6
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -95,7 +126,7 @@ app.get('/api', swaggerUi.setup(null, swaggerUiOpts2))
 
 app.listen(3000)
 ```
-#### test 6
+#### test 7
 ```js
 require('swagger-express-next').moduleReplace()
 const express = require('express')
@@ -117,7 +148,7 @@ app.get('/api', swaggerUi.setup(null, swaggerUiOpts))
 
 app.listen(3000)
 ```
-#### test 7
+#### test 8
 ```js
 const swagger = require('swagger-express-next').swagger
 const express = require('express')
@@ -145,7 +176,7 @@ const swgSettings = {
 app.listen(3000)
 ```
 
-#### test 8
+#### test 9
 ```js
 const swagger = require('swagger-express-next').swagger
 const express = require('express')
@@ -180,7 +211,7 @@ app.use('/api', swagger(swgSettings))
 app.listen(3000)
 ```
 
-#### test 9
+#### test 10
 ```js
 const swagger = require('swagger-express-next').swagger
 const express = require('express')
