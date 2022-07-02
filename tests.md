@@ -81,25 +81,26 @@ require('swagger-express-next').moduleReplace()
 const express = require('express')
 const app = express()
 const swaggerUi = require('swagger-ui-express')
-const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
 const options = {
-  validatorUrl : null,
-  url: 'https://petstore.swagger.io/v2/swagger.json',
-  layout:'StandaloneLayout',
-  initOAuth: {
-    clientId: "test", // and user
-    clientSecret: "abc123", // and user
-    realm: "realms1",
-    appName: "swagger-express-next",
-    scopeSeparator: ",",
-    "scopes": "read:pets, write:pets",
-    additionalQueryStringParams: {}
-  }
+  customSiteTitle: 'Swagger OAuth Compatibility',
+  swaggerOptions: {
+    layout:'StandaloneLayout',
+    url: 'https://petstore.swagger.io/v2/swagger.json',
+    oauth2RedirectUrl: 'https://21b9-178-70-90-138.ngrok.io/api/oauth2-redirect.html',
+    initOAuth: {
+      clientId: 'test',
+      clientSecret: 'abc123',
+      realm: 'realm1',
+      appName: 'swagger-express-next',
+      scopeSeparator: ',',
+      scopes: 'read:pets, write:pets',
+    },
+  },
 }
 
 app.use('/api', swaggerUi.serve)
-app.get('/api', swaggerUi.setup(false, false, options, '.swagger-ui .topbar { background-color: red }'))
+app.get('/api', swaggerUi.setup(null, options))
 
 app.listen(3000)
 ```
