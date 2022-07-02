@@ -279,7 +279,7 @@ function swagger(script, html, params) {
 
   return (req, res) => {
 
-    const data = router(`${req.protocol}://${req.get('host')}${req.baseUrl}${req.url}`, {...req.body, ...req.query})
+    const data = router(`${req.baseUrl}${req.url}`, {...req.body, ...req.query})
 
     res.setHeader('Surrogate-Control', 'no-store')
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
