@@ -40,6 +40,7 @@ app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.listen(3000)
 ```
+Больше примеров [смотрите в тестах](https://github.com/angrocode/swagger-express-next/blob/main/tests.md).
 
 #### Установка
 ```
@@ -74,7 +75,6 @@ app.use('/api', swagger(settings))
 
 app.listen(3000)
 ```
-Больше примеров [смотрите в тестах](https://github.com/angrocode/swagger-express-next/blob/main/tests.md).
 
 **swagger(script, html, params)**
 
