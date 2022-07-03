@@ -23,7 +23,7 @@ const express = require('express')
 const app = express()
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
-app.use('/api', swagger({spec: swaggerDocument}))
+app.use('/api', swagger({spec: swaggerDocument}, {header: '<title>Swagger Test</title>'}))
 
 app.listen(3000)
 ```
