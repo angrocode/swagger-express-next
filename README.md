@@ -82,7 +82,8 @@ script **object** \
 Смотрите [swagger-ui configuration](https://github.com/swagger-api/swagger-ui/blob/master/docs/usage/configuration.md) \
 Исключения: \
 syntaxHighlight: только **object**\
-initOAuth: только **object**
+initOAuth: только **object**\
+requestSnippets.languages **array, string**
 
 html **object**
 * header: **string or array or object(values)** html теги, добавляются перед `</head>`
