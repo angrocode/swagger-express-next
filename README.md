@@ -64,7 +64,7 @@ const settings = {
   params: {
     script: {default: true, join: true},
     html:   {default: true},
-    queryConfig: true,
+    queryConfig: false,
     type:   {newParam1: {type: 'array', itemsType: 'string'}, newParam2: 'boolean'},
   }
 }
