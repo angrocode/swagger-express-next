@@ -252,6 +252,40 @@ app.use('/api', swagger(swgSettings))
 app.listen(3000)
 ```
 
+#### test 11 nestjs
+```js
+import { moduleReplace } from 'swagger-express-next'; moduleReplace()
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+import { DocumentBuilder, ExpressSwaggerCustomOptions, SwaggerModule } from '@nestjs/swagger'
+
+const options: ExpressSwaggerCustomOptions = {
+  explorer: false,
+  swaggerOptions: {
+    plugins: 'authorizeIcons',
+  },
+  customJs: 'https://cdn.jsdelivr.net/gh/angrocode/swagger-plugin-authorizeIcons/index.js',
+  customCssUrl: 'https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-flattop.css'
+}
+
+;(async function() {
+  const app = await NestFactory.create(AppModule)
+
+  const config = new DocumentBuilder()
+    .setTitle('Cats example')
+    .setDescription('The cats API description')
+    .setVersion('1.0')
+    .addTag('cats')
+    .addBasicAuth()
+    .build()
+  const document = SwaggerModule.createDocument(app, config)
+  SwaggerModule.setup('api', app, document, options)
+
+  await app.listen(3000)
+})()
+
+```
+
 #### test 99 Old & New Options (internal test)
 ```js
 require('swagger-express-next').moduleReplace()
