@@ -10,7 +10,7 @@
 #### Описание
 Модуль реализует использование пакета [swagger-ui](https://github.com/swagger-api/swagger-ui)
 в виде промежуточного программного обеспечения [express](https://github.com/expressjs/express).
-Простое решение без зависимостей с неограниченными возможностями модификации загрузочной страницы
+Простое решение с неограниченными возможностями модификации загрузочной страницы
 и поддержкой всех настроек скрипта инициализации.
 Совместим с апи [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express).
 
@@ -107,3 +107,19 @@ params **object**
   Позволяет передать пользовательские типы для ключей скрипта инициализации.\
   Типы могут быть объявлены как объект или строка и соответствовать используемым в [стандартных типах](https://github.com/angrocode/swagger-express-next/blob/main/initTypes.js). \
   Тип массив всегда должен указываться в виде объекта {type: 'array', itemsType: 'string'} или {type: 'array', itemsType: 'function'}.
+  
+#### Совместимость
+Тестирование произведено на: \
+[NestJS 8.4.7](https://nestjs.com/) \
+Примеры из тестов [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express/blob/master/test/testapp/app.js)
+
+Для подмены пакета swagger-ui-express используется функция moduleReplace. \
+Функцию нужно вызвать до импорта swagger-ui-express.
+```js
+require('swagger-express-next').moduleReplace()
+const swaggerUi = require('swagger-ui-express')
+```
+
+Если пакет swagger-ui-express обнаружен в node_modules его директория будет переименована в swagger-ui-express_original.
+В новую директорию swagger-ui-express копируются файлы из swagger-express-next.
+
