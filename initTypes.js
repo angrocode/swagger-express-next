@@ -75,4 +75,6 @@ const initTypes = {
   preauthorizeApiKey: {type: 'function'},
 }
 
-module.exports = initTypes
+module.exports = {
+  initTypes
+}
