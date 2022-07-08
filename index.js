@@ -1,8 +1,19 @@
+const {join} = require('node:path')
+const {getAbsoluteFSPath} = require('swagger-ui-dist')
 const fs = require('node:fs')
-const join = require('node:path').join
-const initTypes = require('./initTypes.js')
-const getAbsoluteFSPath = require('swagger-ui-dist/absolute-path.js')
+const {initTypes} = require('./initTypes.js')
 
+
+let InitScriptName
+const localFiles = ['index.html']
+const swaggerFiles = fs.readdirSync(getAbsoluteFSPath()).filter(f => ![
+  'index.html',
+  'index.js',
+  'package.json',
+  'LICENSE',
+  'NOTICE',
+  'README.md'
+].includes(f))
 
 function isObj(d) {
   return (d === Object(d) && Object.prototype.toString.call(d) === '[object Object]')
@@ -15,54 +26,85 @@ function objson(d) {
   return r ?? d
 }
 
+function getInitFile() {
+  const Ic = swaggerFiles
+    .filter(f => f.match(/[^.]+$/)[0] == 'js')
+    .map(f => [f, fs.statSync(join(getAbsoluteFSPath(), f)).size])
+    .filter(f => f[1] <= 222222)
+    .sort((a, b) => a[1] - b[1])
+
+  let Ib
+  ml: for (const f of Ic) {
+    let c = 0
+    const d = fs.readFileSync(join(getAbsoluteFSPath(), f[0])).toString('utf8')
+    for (const k of Object.keys(initTypes)) {
+      if (d.includes(k)) c++
+      if (c >= 3) {
+        Ib = d
+        InitScriptName = f[0]
+        localFiles.push(f[0])
+        swaggerFiles.splice(swaggerFiles.indexOf(f[0]), 1)
+        break ml
+      }
+    }
+  }
+
+  if (!Ib) throw new Error('init file not found')
+
+  const Ir = Ib.replace(/[\r\n\s\[\];"']/gm, '')
+  const Ik = [...Ir.match(/[\w._-]+:/g).filter(v => !['https:', 'http:'].includes(v)), '}']
+  const Ira = Ik.reduce((a, k, i, r) => {
+    a.push([k, Ir.match(new RegExp(`(?<=${k}).*?(?=${r[i + 1]})`, 'g'))])
+    return a
+  }, [])
+
+  return Ira.reduce((a, [k, v]) => {
+    if (k == '}' || k == 'url:') return a
+    a[k.match(/[\w._-]+/)] = v[0].split(',').filter(v => /\w\S+/.exec(v))
+    return a
+  }, {})
+
+}
+
 const baseHtml = fs.readFileSync(join(getAbsoluteFSPath(), 'index.html'))
   .toString('utf8')
   .split('\n')
 
-const baseScript = JSON.parse(`{
-  "dom_id": "#swagger-ui",
-  "deepLinking": "true",
-  "queryConfigEnabled": "false",
-  "presets": [
-    "SwaggerUIBundle.presets.apis",
-    "SwaggerUIStandalonePreset"
-  ],
-  "plugins": [
-    "SwaggerUIBundle.plugins.DownloadUrl"
-  ]
-}`)
+const baseScript = getInitFile()
 
 function genHtml(defaultHtml, userHtml, params) {
   params = {default: true, uri: '', ...params}
   if (!params?.default) return userHtml
   if (!params?.default && !Array.isArray(defaultHtml) && !defaultHtml?.length)
     throw new Error('genHtml: defaultHtml must not be an empty array')
-  let html = defaultHtml.map(v => v), {header, body} = userHtml ?? {}
+  let html = [...defaultHtml]
+  let head = userHtml?.head ?? userHtml?.header
+  let body = userHtml?.body
 
-  if (header) {
-    if (typeof header === 'string' || header instanceof String) header = [header]
-    else if (Array.isArray(header)) null
-    else if (isObj(header)) header = Object.values(header)
-    else throw new Error('The header can be a string, an array, an object')
+  if (head) {
+    if (typeof head === 'string' || head instanceof String) head = [head]
+    else if (Array.isArray(head)) head = [...head]
+    else if (isObj(head)) head = Object.values(head)
+    else throw new Error('The head can be a string, an array, an object')
 
     let indx
-    if ((indx = header.findIndex(v => v.includes('<title>'))) + 1) {
-      html[html.findIndex(v => v.includes('<title>'))] = `\t${header.splice(indx, 1)[0]}`
+    if ((indx = head.findIndex(v => v.includes('<title>'))) + 1) {
+      html[html.findIndex(v => v.includes('<title>'))] = `\t${head.splice(indx, 1)[0]}`
     }
 
-    if (header.some(v => v.includes('icon'))) {
+    if (head.some(v => v.includes('icon'))) {
       html = html.filter(v => !v.includes('icon'))
     }
 
     indx = html.findIndex(v => v.includes('</head>'))
-    header.forEach(v => {
+    head.forEach(v => {
       html.splice(indx++, null, `\t${v}`)
     })
   }
 
   if (body) {
     if (typeof body === 'string' || body instanceof String) body = [body]
-    else if (Array.isArray(body)) null
+    else if (Array.isArray(body)) body = [...body]
     else if (isObj(body)) body = Object.values(body)
     else throw new Error('The body can be a string, an array, an object')
 
@@ -187,7 +229,12 @@ function genScript(defaultObj, userObj, params) {
 
     } else if (Array.isArray(d)) {
       switch (t.type) {
+        case 'string':   return d[0]
+        case 'number':   return d[0]
+        case 'boolean':  return d[0]
         case 'array':    return d
+        case 'object':   return d[0]
+        case 'json':     return objson(d[0])
         default: throw new Error(`${k} must be an ${t.type}`)
       }
 
@@ -196,7 +243,7 @@ function genScript(defaultObj, userObj, params) {
         case 'array':    return [d]
         case 'object':   return d
         case 'json':     return objson(d)
-        default: throw new Error(`${k} must be!! an ${t.type}`)
+        default: throw new Error(`${k} must be an ${t.type}`)
       }
 
     } else if (typeof d == 'function') {
@@ -239,17 +286,6 @@ const mimeTypes = {
   js: 'application/json',
 }
 
-const localFiles = ['index.html', 'swagger-initializer.js']
-
-const swaggerFiles = fs.readdirSync(getAbsoluteFSPath()).filter(f => ![
-  'index.html',
-  'swagger-initializer.js',
-  'package.json',
-  'LICENSE',
-  'NOTICE',
-  'README.md'
-].includes(f))
-
 function swagger(script, html, params) {
   if (Object.keys(script).filter(k => ['script', 'html', 'params'].includes(k)).length > 0)
     params = script?.params ?? params, html = script?.html ?? html, script = script?.script
@@ -260,8 +296,9 @@ function swagger(script, html, params) {
   function _routsVariable(key) {
     switch (key) {
       case 'index.html':
+        console.log(swaggerFiles)
         return genHtml(baseHtml, html, {uri, ...params?.html})
-      case 'swagger-initializer.js':
+      case InitScriptName:
         return genScript(baseScript, {...script, ...queryMod}, params?.script)
       default: return null
     }
@@ -314,7 +351,7 @@ function generateHTML(...args) {return ''}
 
 function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swaggerUrl, customSiteTitle) {
   const script = {}
-  const header = []
+  const head = []
   const body   = []
 
   const swgOptions   = isObj(opts?.swaggerOptions) ? opts.swaggerOptions : {}
@@ -334,14 +371,14 @@ function generateParams(swaggerDoc, opts, options, customCss, customfavIcon, swa
   if (isExplorer)      script['layout'] = 'StandaloneLayout'
   if (swaggerDoc)      script['spec']   = isObj(swaggerDoc) ? objson(swaggerDoc) : swaggerDoc
 
-  if (customfavIcon)   header.push(`<link rel="icon" href="${customfavIcon}" />`)
-  if (customSiteTitle) header.push(`<title>${customSiteTitle}</title>`)
-  if (customCssUrl)    header.push(`<link href="${customCssUrl}" rel="stylesheet">`)
-  if (customCss)       header.push(`<style>${customCss}</style>`)
+  if (customfavIcon)   head.push(`<link rel="icon" href="${customfavIcon}" />`)
+  if (customSiteTitle) head.push(`<title>${customSiteTitle}</title>`)
+  if (customCssUrl)    head.push(`<link href="${customCssUrl}" rel="stylesheet">`)
+  if (customCss)       head.push(`<style>${customCss}</style>`)
   if (customJs)        body.push  (`<script src="${customJs}"></script>`)
   if (customJsStr)     body.push  (`<script>${customJsStr}</script>`)
 
-  return {script: {...script, ...swgOptions, ...options}, html: {header, body}}
+  return {script: {...script, ...swgOptions, ...options}, html: {head, body}}
 }
 
 function moduleReplace() {
