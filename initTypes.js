@@ -73,6 +73,7 @@ const initTypes = {
   initOAuth: {type: 'object', itemsType: initOAuth},
   preauthorizeBasic: {type: 'function'},
   preauthorizeApiKey: {type: 'function'},
+  '*': {type: 'string'},
 }
 
 module.exports = {
