@@ -23,7 +23,7 @@ const express = require('express')
 const app = express()
 const swaggerDocument = '{"openapi": "3.0.0","info": {"title": "test","version": "1.0"}}'
 
-app.use('/api', swagger({spec: swaggerDocument}, {header: '<title>Swagger Test</title>'}))
+app.use('/api', swagger({spec: swaggerDocument}, {head: '<title>Swagger Test</title>'}))
 
 app.listen(3000)
 ```
@@ -40,6 +40,22 @@ app.use('/api', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 
 app.listen(3000)
 ```
+
+###### Без express
+```js
+const {createServer} = require('node:http')
+const {swagger} = require('swagger-express-next')
+const swaggerDocument = {openapi: "3.0.0", info: {title: "test", version: 1.0}}
+
+createServer((req, res) => {
+
+  swagger({spec: swaggerDocument}, {head: '<title>Swagger Test</title>'})(req, res)
+
+}).listen(3000, '127.0.0.1', e => {
+  e ? console.log('HTTP server start error', e) : console.log('HTTP server running ...')
+})
+```
+
 Больше примеров [смотрите в тестах](https://github.com/angrocode/swagger-express-next/blob/main/tests.md).
 
 #### Установка
@@ -104,7 +120,7 @@ params **object**
   * default: **boolean** \
     Использовать параметры предложенные разработчиками swagger-ui при генерации страницы загрузки,
     будут дополнены / изменены значениями из параметра html.
-* queryConfig **boolean** \
+* queryConfig: **boolean** \
   Разрешает передачу параметров в запросе, методом GET и POST
 * type: **object** \
   Позволяет передать пользовательские типы для ключей скрипта инициализации.\
