@@ -73,7 +73,7 @@ const express = require('express')
 const app = express()
 
 const settings = {
-  html: {header: '<title>Swagger Test</title>'},
+  html: {head: '<title>Swagger Test</title>'},
   script: {
     layout:'StandaloneLayout',
     url: 'https://petstore.swagger.io/v2/swagger.json',
@@ -106,7 +106,7 @@ requestSnippets.languages: **array[string]**
 Объекты и json преобразуются с помощью JSON.stringify и JSON.parse соответственно, в случаи ошибки исключения не выдаются, описание ошибки можно найти в браузере в виде объекта {objson_error: e} на том ключе которому был передан объект или json.
 
 html: **object**
-* header: **string or array or object(values)** html теги, добавляются перед `</head>`
+* head: **string or array or object(values)** html теги, добавляются перед `</head>`
 * body: **string or array or object(values)** html теги, добавляются перед `</body>`
 
 params: **object**
