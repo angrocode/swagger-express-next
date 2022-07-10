@@ -12,7 +12,8 @@
 в виде промежуточного программного обеспечения [express](https://github.com/expressjs/express).
 Простое решение с неограниченными возможностями модификации загрузочной страницы
 и поддержкой всех настроек скрипта инициализации.
-Совместим с апи [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express).
+Совместим с [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express). \
+Может использоваться без express.
 
 #### Использование
 
@@ -94,7 +95,7 @@ app.listen(3000)
 
 **swagger(script, html, params)**
 
-script **object** \
+script: **object** \
 Смотрите [swagger-ui configuration](https://github.com/swagger-api/swagger-ui/blob/master/docs/usage/configuration.md) \
 Исключения: \
 syntaxHighlight: только **object**\
@@ -104,11 +105,11 @@ requestSnippets.languages **array[string]**
 Типы значений могут отличаться от указанных в документации, так array можно передать в виде строки, если добавляется одно значение, bool в виде строки и т.д. Если скрипт не сможет привести переданные значения к установленным типам будет выдано исключение.
 Объекты и json преобразуются с помощью JSON.stringify и JSON.parse соответственно, в случаи ошибки исключения не выдаются, описание ошибки можно найти в браузере в виде объекта {objson_error: e} на том ключе которому был передан объект или json.
 
-html **object**
+html: **object**
 * header: **string or array or object(values)** html теги, добавляются перед `</head>`
 * body: **string or array or object(values)** html теги, добавляются перед `</body>`
 
-params **object**
+params: **object**
 * script: **object** по умолчанию ***{default: true, join: true}***
   * default: **boolean** \
   Использовать параметры предложенные разработчиками swagger-ui при генерации скрипта,
