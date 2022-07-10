@@ -53,7 +53,7 @@ const app = express()
 
 const swgSettings = {
   html: {
-    header: '<title>Swagger OAuth Origin</title>',
+    head: '<title>Swagger OAuth Origin</title>',
   },
   script: {
     layout:'StandaloneLayout',
@@ -157,7 +157,7 @@ const app = express()
 
 const swgSettings = {
   html: {
-    header: [
+    head: [
       '<title>Theme & Plugin</title>',
       '<link href="https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-flattop.css" rel="stylesheet">',
     ],
@@ -220,7 +220,7 @@ const app = express()
 
 const swgSettings = {
   html: {
-    header: '<title>Swagger Snippets</title>',
+    head: '<title>Swagger Snippets</title>',
   },
   script: {
     layout:'StandaloneLayout',
@@ -322,7 +322,7 @@ const oldOptions = {
 
 const newOptions = {
   html: {
-    header: [
+    head: [
       '<title>Old & New Options</title>',
       '<link rel="icon" type="image/x-icon" href="favicon-1.test" /> ',
       '<link href="https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-flattop.css" rel="stylesheet">',
