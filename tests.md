@@ -252,7 +252,22 @@ app.use('/api', swagger(swgSettings))
 app.listen(3000)
 ```
 
-#### test 11 nestjs
+#### test 11 without express
+```js
+const {createServer} = require('node:http')
+const {swagger} = require('swagger-express-next')
+const swaggerDocument = {openapi: "3.0.0", info: {title: "test", version: 1.0}}
+
+createServer((req, res) => {
+
+  swagger({spec: swaggerDocument}, {head: '<title>Swagger Test</title>'})(req, res)
+
+}).listen(3000, '127.0.0.1', e => {
+  e ? console.log('HTTP server start error', e) : console.log('HTTP server running ...')
+})
+```
+
+#### test 12 nestjs
 ```js
 import { moduleReplace } from 'swagger-express-next'; moduleReplace()
 import { NestFactory } from '@nestjs/core'
