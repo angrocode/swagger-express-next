@@ -7,6 +7,11 @@
 
 </div>
 
+Always open to ideas. \
+Positive or negative, all are welcome. \
+Feel free to contribute an [issue](https://github.com/angrocode/swagger-express-next/issues) or [pr](https://github.com/angrocode/swagger-express-next/pulls).
+
+
 #### Описание
 Модуль реализует использование пакета [swagger-ui](https://github.com/swagger-api/swagger-ui)
 в виде промежуточного программного обеспечения [express](https://github.com/expressjs/express).
