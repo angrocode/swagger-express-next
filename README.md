@@ -3,7 +3,7 @@
 <div align="right">
 
 [![ver badge](https://badgen.net/npm/v/swagger-express-next)](https://www.npmjs.com/package/swagger-express-next) 
-[![down badge](https://badgen.net/npm/dm/swagger-express-next)](https://www.npmjs.com/package/swagger-express-next)
+[![down badge](https://badgen.net/npm/dm/swagger-express-next)](https://npm.chart.dev/swagger-express-next?primary=amber&gray=cool&theme=dark)
 
 </div>
 
